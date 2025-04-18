@@ -22,16 +22,20 @@ export const authOptions = {
             }),
           });
 
-          const user = await response.json();
+          const data = await response.json();
 
-          if (response.ok && user) {
+          if (response.ok && data.token) {
             return {
-              id: user.id,
-              token: user.token,
-              userName: user.userName,
-              firstName: user.firstName,    // Added first name
-              lastName: user.lastName,       // Added last name
-              email: user.email              // Added email
+              token: data.token,  // Token from root
+              id: data.user.id,
+              firstName: data.user.first_name,  // Matches API response
+              lastName: data.user.last_name,    // Matches API response
+              email: data.user.email,
+              phoneNumber: data.user.phone_number,
+              position: data.user.position,
+              role: data.user.role,
+              userName: data.user.username,
+              profilePicture: data.user.profile_picture
             };
           }
           return null;
@@ -50,20 +54,31 @@ export const authOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.accessToken = user.token;
+        token.id = user.id;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+        token.email = user.email;
+        token.phoneNumber = user.phoneNumber;
+        token.position = user.position;
+        token.role = user.role;
         token.userName = user.userName;
-        token.firstName = user.firstName;    // Added first name to token
-        token.lastName = user.lastName;      // Added last name to token
-        token.email = user.email;            // Added email to token
+        token.profilePicture = user.profilePicture;
       }
       return token;
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken;
+      session.user.id = token.id;
+      session.user.name = `${token.firstName} ${token.lastName}`;
+      session.user.firstName = token.firstName;
+      session.user.lastName = token.lastName;
+      session.user.email = token.email;
+      session.user.phoneNumber = token.phoneNumber;
+      session.user.position = token.position;
+      session.user.role = token.role;
       session.user.userName = token.userName;
-      session.user.firstName = token.firstName;  // Added first name to session
-      session.user.lastName = token.lastName;    // Added last name to session
-      session.user.email = token.email;          // Added email to session
-      session.user.name = `${token.firstName} ${token.lastName}`; // Combined full name
+      session.profilePicture = token.profilePicture;
+      
+      session.accessToken = token.accessToken;
       return session;
     }
   },

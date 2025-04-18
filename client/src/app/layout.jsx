@@ -3,6 +3,7 @@ import React from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "./components/Navbar";
+import SideBar from "./components/Sidebar";
 import { Providers } from "./Providers";
 
 export const metadata = {
@@ -26,7 +27,13 @@ const AppLayout = ({ children }) => {
       <body>
         <Providers>
           <Navbar />
-          {children}
+          <div className="flex">
+            {/* Sidebar will only render if there's a session */}
+            <div className="hidden lg:block">
+              <SideBar />
+            </div>
+            <main className="flex-1 min-h-screen">{children}</main>
+          </div>
         </Providers>
       </body>
     </html>

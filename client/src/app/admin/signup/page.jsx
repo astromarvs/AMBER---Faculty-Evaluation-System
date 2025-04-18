@@ -57,11 +57,6 @@ const SignUp = () => {
     }
   }, [session, router]);
 
-  // Add a loading state to handle when the session is still being fetched
-  if (status === "loading") {
-    return <div>Loading...</div>; // Or a loading spinner
-  }
-
   // If the user is logged in, do not render the sign-up form
   if (session) {
     return null; // Or a redirect to another page if preferred

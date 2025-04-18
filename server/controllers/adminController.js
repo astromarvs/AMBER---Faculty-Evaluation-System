@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 const { poolPromise } = require("../config/db");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 const registerAdmin = async (req, res) => {
   try {
@@ -100,15 +100,18 @@ const loginAdmin = async (req, res) => {
         first_name,
         last_name,
         email,
+		    phone_number,
+		    position,
+		    role,
         username,
-        password
+        password,
+		    profile_picture
       FROM Admin
       WHERE username = ?
     `;
 
     // For ODBC connection pool
     const [admin] = await pool.query(query, [userName]);
-    console.log("Result: ", admin)
 
     if (!admin) {
       return res.status(401).json({ error: "Invalid credentials" });
@@ -123,11 +126,15 @@ const loginAdmin = async (req, res) => {
     const token = jwt.sign(
       {
         id: admin.id,
-        userName: admin.userName,
-        role: admin.role,
         firstName: admin.firstName,
         lastName: admin.lastName,
         email: admin.email,
+        phoneNumber: admin.phoneNumber,
+        position: admin.position,
+        role: admin.role,
+        userName: admin.userName,
+        profilePicture: admin.profilePicture
+        
       },
       process.env.JWT_SECRET,
       { expiresIn: "30d" }
@@ -135,6 +142,8 @@ const loginAdmin = async (req, res) => {
 
     // Return user data without password
     const { password: _, ...userData } = admin;
+
+    console.log("Result: ", userData)
 
     res.status(200).json({
       message: "Login successful",
