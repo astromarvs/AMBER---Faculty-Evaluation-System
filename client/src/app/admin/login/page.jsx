@@ -1,5 +1,8 @@
 "use client";
 
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import {
   Card,
   CardHeader,
@@ -10,8 +13,56 @@ import {
   Button,
   Link,
 } from "@heroui/react";
+import { Eye, EyeOff } from "lucide-react";
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 const Login = () => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+  const [isVisible, setIsVisible] = useState(false);
+
+  const toggleVisibility = () => setIsVisible(!isVisible);
+
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    // If the user is logged in, redirect them to the dashboard
+    if (session) {
+      router.push("/admin/dashboard");
+    }
+  }, [session, router]);
+
+  // If there's no session, render the login page form
+  if (session) return null; // Or a loading state
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    const result = await signIn("credentials", {
+      redirect: false,
+      userName: username,
+      password,
+    });
+
+    setLoading(false);
+
+    if (result?.error) {
+      setError(
+        result.error === "CredentialsSignin"
+          ? "Invalid username or password"
+          : result.error
+      );
+    } else {
+      router.push("/admin/dashboard");
+    }
+  };
+
   return (
     <div className="w-full h-screen flex bg-cover bg-center">
       {/* Left-side design panel */}
@@ -30,21 +81,63 @@ const Login = () => {
           <CardHeader className="text-xl font-semibold">Login</CardHeader>
           <Divider />
           <CardBody className="space-y-6">
+            {/* Error message */}
+            {error && (
+              <div className="p-3 bg-red-100 text-red-700 rounded-md">
+                {error}
+              </div>
+            )}
+
             {/* Login Information */}
             <section>
               <h5 className="text-medium font-medium text-gray-600 mb-2">
                 Login Information
               </h5>
-              <div className="grid grid-cols-1 gap-4">
-                <Input label="User Name" variant="bordered" />
-                <Input label="Password" type="password" variant="bordered" />
-              </div>
+              <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 gap-4">
+                  <Input
+                    label="User Name"
+                    variant="bordered"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                  <Input
+                    label="Password"
+                    type={isVisible ? "text" : "password"}
+                    variant="bordered"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    endContent={
+                      <button
+                        aria-label="toggle password visibility"
+                        className="focus:outline-none"
+                        type="button"
+                        onClick={toggleVisibility}
+                      >
+                        {isVisible ? (
+                          <EyeOff className="text-2xl text-default-400 pointer-events-none" />
+                        ) : (
+                          <Eye className="text-2xl text-default-400 pointer-events-none" />
+                        )}
+                      </button>
+                    }
+                  />
+                </div>
+              </form>
             </section>
           </CardBody>
 
           <CardFooter className="flex flex-col items-center gap-3">
-            <Button className="w-8/12 bg-blue-500 text-white" variant="solid">
-              Login
+            <Button
+              className="w-8/12 bg-blue-500 text-white"
+              variant="solid"
+              onClick={handleSubmit}
+              isLoading={loading}
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Login"}
             </Button>
             <p className="text-lg font-medium text-center">
               Doesn't have an account?{" "}

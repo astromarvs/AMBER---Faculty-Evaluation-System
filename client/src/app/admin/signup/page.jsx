@@ -16,11 +16,18 @@ import { Eye, EyeOff } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import VerificationModal from "../../components/VerificationModal";
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const SignUp = () => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [isVisible, setIsVisible] = useState(false);
   const [isVisible2, setIsVisible2] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const { data: session, status } = useSession(); // Added status for loading state
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -29,8 +36,7 @@ const SignUp = () => {
     phone: "",
     position: "",
     role: "",
-    username: "",
-    password: "",
+    userName: "",
     confirmPassword: "",
   });
 
@@ -44,6 +50,23 @@ const SignUp = () => {
     }));
   };
 
+  useEffect(() => {
+    // If the user is logged in, redirect them to the dashboard
+    if (session) {
+      router.push("/admin/dashboard");
+    }
+  }, [session, router]);
+
+  // Add a loading state to handle when the session is still being fetched
+  if (status === "loading") {
+    return <div>Loading...</div>; // Or a loading spinner
+  }
+
+  // If the user is logged in, do not render the sign-up form
+  if (session) {
+    return null; // Or a redirect to another page if preferred
+  }
+
   const validatePassword = (password) => {
     const regex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.,])[A-Za-z\d@$!%*?&.,]{8,}$/;
@@ -54,7 +77,12 @@ const SignUp = () => {
     return Object.values(formData).some((val) => val.trim() === "");
   };
 
-  const handleSubmit = () => {
+  const generateVerificationCode = () => {
+    // Generate a random 6-digit number between 100000 and 999999
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
+  const handleSubmit = async () => {
     if (isEmptyField()) {
       toast.error("All fields must be filled out.");
       return;
@@ -72,7 +100,69 @@ const SignUp = () => {
       return;
     }
 
-    onOpen(); // Open modal if all checks pass
+    let userNameResponse;
+
+    try {
+      userNameResponse = await fetch(
+        "http://localhost:5000/api/admin/check-username",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userName: formData.userName }),
+        }
+      );
+    } catch (err) {
+      toast.error("Network error while checking username.");
+      return;
+    }
+
+    if (userNameResponse.status === 409) {
+      toast.error("Username already exists.");
+      return;
+    } else if (!userNameResponse.ok) {
+      toast.error("Something went wrong while checking username.");
+      return;
+    } else {
+      setIsLoading(true);
+      try {
+        // Generate verification code
+        const verificationCode = generateVerificationCode();
+
+        // Create updated form data
+        const updatedFormData = { ...formData, verificationCode };
+        setFormData(updatedFormData);
+
+        // Send verification email
+        const response = await fetch("http://localhost:5000/api/email/send", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            to: updatedFormData.email,
+            subject: "Account Verification Code",
+            text: `Hello ${updatedFormData.firstName},\n\nYour verification code is: ${verificationCode}`,
+            html: `
+            <p>Hello <strong>${updatedFormData.firstName}</strong>,</p>
+            <p>Your verification code is: <strong>${verificationCode}</strong></p>
+            <p>This code will expire in 10 minutes.</p>
+          `,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to send verification email");
+        }
+
+        onOpen(); // Open modal if email sent successfully
+      } catch (error) {
+        toast.error("Failed to send verification email. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
   };
 
   return (
@@ -163,8 +253,8 @@ const SignUp = () => {
                 <Input
                   label="User Name"
                   variant="bordered"
-                  name="username"
-                  value={formData.username}
+                  name="userName"
+                  value={formData.userName}
                   onChange={handleChange}
                 />
                 <Input
@@ -220,6 +310,7 @@ const SignUp = () => {
               className="w-8/12 bg-blue-500 text-white"
               variant="solid"
               onClick={handleSubmit}
+              isLoading={isLoading}
             >
               Create Account
             </Button>
@@ -234,7 +325,11 @@ const SignUp = () => {
       </div>
 
       {/* Modal */}
-      <VerificationModal isOpen={isOpen} onOpenChange={onOpenChange} />
+      <VerificationModal
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        formData={formData}
+      />
 
       {/* Toast container */}
       <ToastContainer position="top-right" autoClose={3000} />
