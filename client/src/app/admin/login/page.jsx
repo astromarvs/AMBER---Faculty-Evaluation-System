@@ -16,18 +16,20 @@ import {
 import { Eye, EyeOff } from "lucide-react";
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
+import LoadingAnimation from "../../components/LoadingAnimation";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const [isVisible, setIsVisible] = useState(false);
 
   const toggleVisibility = () => setIsVisible(!isVisible);
 
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     // If the user is logged in, redirect them to the dashboard
@@ -36,13 +38,12 @@ const Login = () => {
     }
   }, [session, router]);
 
-  // If there's no session, render the login page form
-  if (session) return null; // Or a loading state
+  if (status === "loading") {
+    return <LoadingAnimation />;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
 
     const result = await signIn("credentials", {
       redirect: false,
@@ -53,11 +54,7 @@ const Login = () => {
     setLoading(false);
 
     if (result?.error) {
-      setError(
-        result.error === "CredentialsSignin"
-          ? "Invalid username or password"
-          : result.error
-      );
+      toast.error("Invalid credentials!");
     } else {
       router.push("/admin/dashboard");
     }
@@ -65,6 +62,7 @@ const Login = () => {
 
   return (
     <div className="w-full h-screen flex bg-cover bg-center">
+      <ToastContainer position="top-right" autoClose={3000} />
       {/* Left-side design panel */}
       <div className="hidden md:flex w-3/4 items-center justify-center bg-black/50 text-white p-10">
         <div className="text-center">
@@ -81,13 +79,6 @@ const Login = () => {
           <CardHeader className="text-xl font-semibold">Login</CardHeader>
           <Divider />
           <CardBody className="space-y-6">
-            {/* Error message */}
-            {error && (
-              <div className="p-3 bg-red-100 text-red-700 rounded-md">
-                {error}
-              </div>
-            )}
-
             {/* Login Information */}
             <section>
               <h5 className="text-medium font-medium text-gray-600 mb-2">

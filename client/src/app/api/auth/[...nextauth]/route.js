@@ -31,11 +31,7 @@ export const authOptions = {
               firstName: data.user.first_name,  // Matches API response
               lastName: data.user.last_name,    // Matches API response
               email: data.user.email,
-              phoneNumber: data.user.phone_number,
-              position: data.user.position,
-              role: data.user.role,
               userName: data.user.username,
-              profilePicture: data.user.profile_picture
             };
           }
           return null;
@@ -58,11 +54,7 @@ export const authOptions = {
         token.firstName = user.firstName;
         token.lastName = user.lastName;
         token.email = user.email;
-        token.phoneNumber = user.phoneNumber;
-        token.position = user.position;
-        token.role = user.role;
         token.userName = user.userName;
-        token.profilePicture = user.profilePicture;
       }
       return token;
     },
@@ -72,12 +64,7 @@ export const authOptions = {
       session.user.firstName = token.firstName;
       session.user.lastName = token.lastName;
       session.user.email = token.email;
-      session.user.phoneNumber = token.phoneNumber;
-      session.user.position = token.position;
-      session.user.role = token.role;
       session.user.userName = token.userName;
-      session.profilePicture = token.profilePicture;
-      
       session.accessToken = token.accessToken;
       return session;
     }

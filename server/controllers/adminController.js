@@ -100,12 +100,8 @@ const loginAdmin = async (req, res) => {
         first_name,
         last_name,
         email,
-		    phone_number,
-		    position,
-		    role,
         username,
-        password,
-		    profile_picture
+        password
       FROM Admin
       WHERE username = ?
     `;
@@ -129,12 +125,7 @@ const loginAdmin = async (req, res) => {
         firstName: admin.firstName,
         lastName: admin.lastName,
         email: admin.email,
-        phoneNumber: admin.phoneNumber,
-        position: admin.position,
-        role: admin.role,
         userName: admin.userName,
-        profilePicture: admin.profilePicture
-        
       },
       process.env.JWT_SECRET,
       { expiresIn: "30d" }

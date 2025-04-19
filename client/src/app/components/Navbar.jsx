@@ -12,12 +12,10 @@ import {
   NavbarMenu,
   NavbarMenuItem,
   Link,
-  Button,
   DropdownItem,
   DropdownTrigger,
   Dropdown,
   DropdownMenu,
-  Avatar,
 } from "@heroui/react";
 import amberIcon from "../../../public/assets/media/A.ico";
 import { useSession, signOut } from "next-auth/react";
@@ -25,7 +23,7 @@ import { useSession, signOut } from "next-auth/react";
 const AppNavbar = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   const menuItems = [
     {
@@ -104,6 +102,8 @@ const AppNavbar = () => {
                 </DropdownMenu>
               </Dropdown>
             </>
+          ) : status === 'loading' ? (
+            <></>
           ) : (
             <>
               <NavbarItem className="hidden sm:flex">

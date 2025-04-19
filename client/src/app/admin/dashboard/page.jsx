@@ -2,6 +2,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import LoadingAnimation from "../../components/LoadingAnimation";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -13,6 +14,11 @@ export default function DashboardPage() {
     }
   }, [status, router]);
 
+  // Don't render anything if there's no session or still loading
+  if (status === "loading") {
+    return <LoadingAnimation />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,11 +27,10 @@ export default function DashboardPage() {
           <p className="mt-4 text-lg text-gray-600">
             Welcome, {session?.user?.name || "Admin"}!
           </p>
-          <p className="mt-4 text-lg text-gray-600">
-            Phone {session.user.phoneNumber || "Admin"}!
-          </p>
           <div className="mt-8 bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800">Dashboard Content</h2>
+            <h2 className="text-xl font-semibold text-gray-800">
+              Dashboard Content
+            </h2>
             <p className="mt-2 text-gray-600">
               This is a protected admin dashboard page.
             </p>

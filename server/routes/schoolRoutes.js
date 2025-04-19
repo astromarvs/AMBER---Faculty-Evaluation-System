@@ -1,11 +1,15 @@
 const express = require("express");
 const {
-    getSchools
+    getSchool,
+    addSchool,
+    updateSchool
 } = require("../controllers/schoolController")
 
 
 const router = express.Router();
 
-router.get("/get-schools", getSchools)
+router.get("/get-school", getSchool)
+router.post("/add-school", addSchool)
+router.put("/update-school", updateSchool)
 
 module.exports = router;

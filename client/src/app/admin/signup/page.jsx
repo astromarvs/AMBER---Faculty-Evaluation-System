@@ -19,6 +19,7 @@ import VerificationModal from "../../components/VerificationModal";
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import LoadingAnimation from "../../components/LoadingAnimation";
 
 const SignUp = () => {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
@@ -60,6 +61,10 @@ const SignUp = () => {
   // If the user is logged in, do not render the sign-up form
   if (session) {
     return null; // Or a redirect to another page if preferred
+  }
+
+  if (status === "loading") {
+    return <LoadingAnimation />;
   }
 
   const validatePassword = (password) => {

@@ -1,43 +1,79 @@
 "use client";
 
-import { useState } from "react";
-import { Transition } from "@headlessui/react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Home, FolderKanban, ListTodo, Menu, X } from "lucide-react";
+import { Home, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import SchoolModal from "../components/SchoolModal";
+import { toast } from "react-toastify";
+import Image from "next/image";
+import DefaultPicture from "../../../public/assets/media/AmberDefault.png";
+import { Button } from "@heroui/react";
 
 export default function CollapsibleSidebar() {
   const [isOpen, setIsOpen] = useState(true);
+  const [isSchoolModalOpen, setIsSchoolModalOpen] = useState(false);
+  const [school, setSchool] = useState(null);
   const pathname = usePathname();
-  const router = useRouter();
   const { data: session, status } = useSession();
 
-  // Helper function to determine if route is active
-  const isActive = (path: string) => pathname.startsWith(path);
+  const isActive = (path) => pathname.startsWith(path);
 
-  // Don't render anything if there's no session or still loading
-  if (status === "loading") {
-    return null;
-  }
+  const fetchSchool = async () => {
+    if (status === "authenticated" && session?.accessToken) {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/school/get-school",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.accessToken}`,
+            },
+          }
+        );
 
-  if (!session) {
-    return null;
-  }
+        if (!response.ok) {
+          console.log("Failed to fetch school");
+          return;
+        }
+
+        const schoolData = await response.json();
+
+        if (schoolData.school_picture) {
+          schoolData.school_picture = `data:image/jpeg;base64,${schoolData.school_picture}`;
+        }
+
+        setSchool(schoolData);
+      } catch (error) {
+        toast.error("Error fetching school. Please try again later.", {
+          autoClose: 2000,
+        });
+        console.error("Error fetching school:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.accessToken) {
+      fetchSchool();
+      console.log("Access Token:", session.accessToken);
+    }
+  }, [session, status]);
+
+  if (status === "loading") return null;
+  if (status === "unauthenticated") return null;
 
   return (
     <div className="flex h-full w-full">
-      {/* Sidebar */}
       <motion.div
         initial={{ width: 60 }}
         animate={{ width: isOpen ? 250 : 60 }}
         transition={{ duration: 0.3 }}
-        className="bg-[#fcb455] h-full shadow-md relative"
+        className="bg-[#fcb455] h-full shadow-md relative flex flex-col"
       >
-        {/* Floating Toggle Button */}
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="absolute -right-4 top-2 bg-[#FFBF00] rounded-full w-10 h-10 flex items-center justify-center shadow-lg"
@@ -45,8 +81,48 @@ export default function CollapsibleSidebar() {
           {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
 
-        <div className="space-y-1 mt-16 w-full">
-          {/* Home */}
+        {/* School Info Section - Only visible when expanded */}
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="p-4 flex flex-col items-center border-b border-white/20"
+          >
+            <div className="mb-3 w-[150px] h-[150px] rounded-full overflow-hidden flex items-center justify-center">
+              {school?.school_picture ? (
+                <Image
+                  src={school.school_picture}
+                  alt="School Logo"
+                  width={150}
+                  height={150}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={DefaultPicture}
+                  alt="Default School Logo"
+                  width={150}
+                  height={150}
+                  className="w-full h-full object-cover"
+                />
+              )}
+            </div>
+
+            <h3 className="text-lg font-semibold text-center text-white mb-4">
+              {school?.school_name || "No School Detected"}
+            </h3>
+
+            <Button
+              onClick={() => setIsSchoolModalOpen(true)}
+              className="w-full"
+            >
+              {school ? "View School Details" : "Add School"}
+            </Button>
+          </motion.div>
+        )}
+
+        <div className="space-y-1 mt-4 w-full overflow-y-auto flex-grow">
           <SidebarItem
             href="/admin/dashboard"
             label="Dashboard"
@@ -56,41 +132,35 @@ export default function CollapsibleSidebar() {
           />
         </div>
       </motion.div>
+
+      <SchoolModal
+        isOpen={isSchoolModalOpen}
+        onOpenChange={setIsSchoolModalOpen}
+        school={school}
+        onSchoolUpdated={fetchSchool}
+      />
     </div>
   );
 }
 
-function SidebarItem({
-  href,
-  icon,
-  label,
-  isOpen,
-  active,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  isOpen: boolean;
-  active: boolean;
-}) {
+function SidebarItem({ href, icon, label, isOpen, active }) {
   return (
     <Link href={href} passHref>
       <div
-        className={`flex items-center space-x-4 cursor-pointer mb-3 transition-all duration-200 w-full p-2 
-        hover:bg-[#ffffff1a] ${active ? "bg-white/20" : ""}`}
+        className={`flex items-center p-3 cursor-pointer transition-all duration-200 ${
+          active ? "bg-white/20" : "hover:bg-[#ffffff1a]"
+        }`}
       >
-        {icon}
-        <Transition
-          show={isOpen}
-          enter="transition-opacity duration-200"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="transition-opacity duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
+        <div className="w-6 h-6 flex items-center justify-center">{icon}</div>
+        <motion.span
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isOpen ? 1 : 0 }}
+          className={`ml-3 text-sm whitespace-nowrap ${
+            isOpen ? "block" : "hidden"
+          }`}
         >
-          <span className="text-sm">{label}</span>
-        </Transition>
+          {label}
+        </motion.span>
       </div>
     </Link>
   );
