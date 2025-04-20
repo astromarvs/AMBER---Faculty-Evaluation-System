@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Home, Menu, X } from "lucide-react";
+import { Home, Menu, X, University } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import Image from "next/image";
 import DefaultPicture from "../../../public/assets/media/AmberDefault.png";
 import { Button } from "@heroui/react";
+
 
 export default function CollapsibleSidebar() {
   const [isOpen, setIsOpen] = useState(true);
@@ -129,6 +130,13 @@ export default function CollapsibleSidebar() {
             icon={<Home className="w-6 h-6" />}
             isOpen={isOpen}
             active={isActive("/admin/dashboard")}
+          />
+          <SidebarItem
+            href="/admin/department"
+            label="Department"
+            icon={<University className="w-6 h-6" />}
+            isOpen={isOpen}
+            active={isActive("/admin/department")}
           />
         </div>
       </motion.div>

@@ -62,7 +62,7 @@ const Login = () => {
 
   return (
     <div className="w-full h-screen flex bg-cover bg-center">
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={2000} />
       {/* Left-side design panel */}
       <div className="hidden md:flex w-3/4 items-center justify-center bg-black/50 text-white p-10">
         <div className="text-center">

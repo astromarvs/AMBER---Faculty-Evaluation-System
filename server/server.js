@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const schoolRoutes = require("./routes/schoolRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const emailRoutes = require("./routes/emailRoutes");
+const departmentRoutes = require("./routes/departmentRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +23,7 @@ app.use(
 
 app.use("/api/school", schoolRoutes);
 app.use("/api/admin", adminRoutes);
+app.use('/api/department', departmentRoutes);
 app.use('/api/email', emailRoutes);
 
 app.listen(PORT, () => {
